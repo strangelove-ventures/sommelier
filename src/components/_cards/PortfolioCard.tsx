@@ -73,17 +73,25 @@ export const PortfolioCard: VFC<PortfolioCardProps> = ({
     pause: false,
   })
 
-  const userTvl = new BigNumber(cellarShareBalance?.toString() ?? 0)
+  let pnlFormatted = "--"
+  let pnlTooltip = ""
+  const hasPnl =
+    cellarShareBalance && positionData?.wallet?.currentDeposits
+  if (hasPnl) {
+    const userTvl = new BigNumber(cellarShareBalance?.toString() ?? 0)
 
-  const currentUserDeposits = new BigNumber(
-    positionData?.wallet?.currentDeposits ?? 0
-  )
-  // always 18 decimals from subgraph, must be normalized to 6
-  const deposits = currentUserDeposits.div(
-    new BigNumber(10).pow(18 - 6)
-  )
+    const currentUserDeposits = new BigNumber(
+      positionData?.wallet?.currentDeposits ?? 0
+    )
+    // always 18 decimals from subgraph, must be normalized to 6
+    const deposits = currentUserDeposits.div(
+      new BigNumber(10).pow(18 - 6)
+    )
 
-  const pnl = getPNL(userTvl, deposits)
+    const pnl = getPNL(userTvl, deposits)
+    pnlFormatted = pnl.toFixed(2, 1)
+    pnlTooltip = `${pnl.toFixed(5, 0)}%: `
+  }
 
   // netValue = cellarValue + rewardValue
   let netValue = new BigNumber(
@@ -145,15 +153,16 @@ export const PortfolioCard: VFC<PortfolioCardProps> = ({
             >
               <CardStat
                 label="pnl"
-                tooltip={`${pnl.toFixed(
-                  5,
-                  0
-                )}%: This represents percentage gains compared to current deposits`}
+                tooltip={`${pnlTooltip}This represents percentage gains compared to current deposits`}
                 labelProps={{
                   textTransform: "uppercase",
                 }}
               >
-                {isConnected ? <Apy apy={pnl.toFixed(2, 1)} /> : "--"}
+                {isConnected && hasPnl ? (
+                  <Apy apy={pnlFormatted} />
+                ) : (
+                  "--"
+                )}
               </CardStat>
             </Box>
             <Stack
